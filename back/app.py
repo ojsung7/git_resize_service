@@ -135,40 +135,45 @@ def optimize_gif_endpoint():
     results: List[Dict[str, Any]] = []
 
     # 2. 각 파일에 대한 최적화 실행
-    for file in uploaded_files:
+    for idx, file in enumerate(uploaded_files):
+        # 클라이언트가 보낸 원본 파일명 우선 사용(없으면 폼 필드 또는 인덱스명 사용)
+        original_filename = file.filename or request.form.get('original_filename') or request.form.get(f'filename_{idx}') or f'file_{idx}.gif'
+        safe_filename = secure_filename(original_filename)
+
         # 파일 데이터 읽기
         input_bytes = file.read()
         original_size = len(input_bytes)
-        filename = secure_filename(file.filename)
-        
+
         # MIME Type 검증
         if file.mimetype != 'image/gif':
-             results.append({
-                 'filename': filename,
-                 'original_size': original_size,
-                 'error': f'File is not a GIF file ({file.mimetype}).',
-                 'optimized_data': None,
-             })
-             continue
-        
-        # Optimization 실행
+            results.append({
+                'filename': original_filename,
+                'original_filename': original_filename,
+                'original_size': original_size,
+                'error': f'File is not a GIF file ({file.mimetype}).',
+                'optimized_data': None,
+            })
+            continue
+
+        # Optimization 실행 (내부는 기존 함수 사용)
         optimized_data, error = optimize_gif_with_pillow_and_gifsicle(
-            input_bytes, 
-            lossy_val, 
+            input_bytes,
+            lossy_val,
             colors_val
         )
-        
+
         optimized_data_b64 = None
         optimized_size = None
-        
+
         if optimized_data and not error:
-            # ⭐ Base64 인코딩: 바이너리 데이터를 문자열로 변환하여 JSON에 포함
+            # Base64 인코딩: 바이너리 데이터를 문자열로 변환하여 JSON에 포함
             optimized_data_b64 = base64.b64encode(optimized_data).decode('utf-8')
             optimized_size = len(optimized_data)
 
-        # 결과 수집
+        # 결과 수집 (응답에는 원본 파일명 사용)
         results.append({
-            'filename': filename,
+            'filename': original_filename,
+            'original_filename': original_filename,
             'original_size': original_size,
             'optimized_data': optimized_data_b64,
             'optimized_size': optimized_size,
