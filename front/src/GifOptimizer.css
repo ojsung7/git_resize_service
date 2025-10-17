@@ -1,0 +1,494 @@
+/*
+* --------------------------------
+* 1. Global & Central Layout
+* --------------------------------
+*/
+
+body {
+    /* 중앙 정렬을 위한 Flexbox 설정 */
+    display: flex;
+    justify-content: center;
+    min-height: 100vh;
+    margin: 0;
+    transition: background-color 0.3s, color 0.3s;
+    font-family: 'Inter', Arial, sans-serif;
+    /* 스크롤바 커스터마이징 */
+    overflow-y: scroll;
+}
+
+.container {
+    max-width: 1000px;
+    width: 95%; /* 모바일 환경에서 좌우 여백 확보 */
+    padding: 30px 20px;
+    margin-top: 20px;
+    margin-bottom: 40px;
+}
+
+h1 {
+    text-align: center;
+    font-size: 2.2rem;
+    font-weight: 700;
+    margin-bottom: 30px;
+}
+
+/*
+* --------------------------------
+* 2. Theme Definitions (Light & Dark)
+* --------------------------------
+*/
+
+/* Light Mode (기본값) */
+:root {
+    --color-bg-primary: #f8f9fa;
+    --color-bg-secondary: #ffffff;
+    --color-text: #212529;
+    --color-border: #dee2e6;
+    --color-accent: #007bff;
+    --color-success: #28a745;
+    --color-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+    --color-error: #dc3545; 
+    --color-error-bg: rgba(220, 53, 69, 0.1);
+}
+
+/* Dark Mode */
+.dark-mode {
+    --color-bg-primary: #212529;
+    --color-bg-secondary: #343a40;
+    --color-text: #f8f9fa;
+    --color-border: #495057;
+    --color-accent: #4da6ff; 
+    --color-success: #20c997;
+    --color-shadow: 0 8px 20px rgba(0, 0, 0, 0.4);
+    --color-error: #ffc107; 
+    --color-error-bg: rgba(255, 193, 7, 0.1);
+}
+
+/* 테마 변수 적용 */
+body {
+    background-color: var(--color-bg-primary);
+    color: var(--color-text);
+}
+
+h1, h2, h3, h4 {
+    color: var(--color-text);
+}
+
+/*
+* --------------------------------
+* 3. Theme Toggle Button
+* --------------------------------
+*/
+
+.theme-toggle-button {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    padding: 10px;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    font-size: 1.2rem;
+    background-color: var(--color-bg-secondary);
+    color: var(--color-text);
+    box-shadow: var(--color-shadow);
+    z-index: 1000;
+    transition: background-color 0.3s, transform 0.2s;
+}
+
+.theme-toggle-button:hover:not(:disabled) {
+    transform: scale(1.05);
+}
+.theme-toggle-button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/*
+* --------------------------------
+* 4. Section & Controls
+* --------------------------------
+*/
+
+.section {
+    margin-bottom: 30px;
+    padding: 25px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background-color: var(--color-bg-secondary);
+    box-shadow: var(--color-shadow);
+}
+
+.hidden-input {
+    /* 실제 input[type="file"]을 완전히 숨깁니다. */
+    display: none;
+}
+
+.custom-file-input-label {
+    display: block;
+    cursor: pointer;
+    border: 3px dashed var(--color-border);
+    border-radius: 10px;
+    padding: 40px 20px;
+    text-align: center;
+    transition: border-color 0.3s, background-color 0.3s;
+    background-color: var(--color-bg-primary); 
+    box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.custom-file-input-label:hover {
+    border-color: var(--color-accent);
+}
+
+.upload-content p {
+    margin-bottom: 15px;
+    font-size: 1.1rem;
+    color: var(--color-text);
+}
+
+.select-file-button {
+    padding: 10px 25px;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-weight: 600;
+    transition: background-color 0.2s, transform 0.1s;
+    box-shadow: 0 3px 6px rgba(0, 0, 0, 0.15);
+}
+
+.select-file-button:hover {
+    background-color: #0056b3;
+    transform: translateY(-1px);
+}
+
+.controls-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); /* 반응형 그리드 */
+    gap: 30px;
+    margin-bottom: 30px;
+}
+
+.control-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.number-input {
+    padding: 8px;
+    width: 100px;
+    text-align: center;
+    border: 1px solid var(--color-border);
+    border-radius: 4px;
+    background-color: var(--color-bg-primary);
+    color: var(--color-text);
+    transition: all 0.2s ease-in-out;
+}
+.number-input:focus {
+    border-color: var(--color-accent);
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+}
+
+.range-input {
+    width: 100%;
+    accent-color: var(--color-accent);
+    transition: all 0.2s ease-in-out;
+}
+.range-input:disabled {
+    opacity: 0.7;
+}
+
+/* 안내 문구 스타일 (추가) */
+.guidance-text {
+    font-size: 0.95rem;
+    color: var(--color-error); /* 경고성 텍스트로 강조 */
+    background-color: var(--color-error-bg);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 15px;
+    font-weight: 500;
+    border: 1px solid var(--color-error);
+}
+
+/*
+* --------------------------------
+* 5. Buttons & Feedback
+* --------------------------------
+*/
+
+.optimize-button {
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 1.1rem;
+    cursor: pointer;
+    background-color: var(--color-accent);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    transition: background-color 0.2s, opacity 0.2s, transform 0.1s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.optimize-button:hover:not(:disabled) {
+    background-color: #0056b3;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 10px rgba(0, 0, 0, 0.2);
+}
+
+.optimize-button:active:not(:disabled) {
+    transform: translateY(1px); 
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.optimize-button:disabled {
+    background-color: var(--color-border);
+    color: var(--color-text);
+    opacity: 0.6;
+    cursor: not-allowed;
+    box-shadow: none;
+}
+
+/* 공통 다운로드 버튼 스타일 */
+.download-all-button, .download-single-button {
+    padding: 10px 20px;
+    font-size: 1rem;
+    cursor: pointer;
+    background-color: var(--color-success);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    transition: background-color 0.2s, transform 0.1s;
+    font-weight: 600;
+}
+
+.download-all-button:hover, .download-single-button:hover {
+    background-color: #1e7e34;
+    transform: translateY(-1px);
+}
+
+.download-all-button:disabled, .download-single-button:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    background-color: var(--color-border);
+    color: var(--color-text);
+}
+
+.download-single-button {
+    width: 100%;
+    margin-top: 10px;
+}
+
+.error-text {
+    color: var(--color-error);
+    background-color: var(--color-error-bg);
+    border: 1px solid var(--color-error);
+    padding: 10px;
+    border-radius: 6px;
+    margin-top: 15px;
+    font-weight: 600;
+    text-align: center;
+}
+
+.small-error {
+    font-size: 0.85rem;
+    padding: 5px;
+    margin: 10px 0;
+    background-color: transparent; 
+    border: none;
+    color: var(--color-error);
+}
+
+
+/*
+* --------------------------------
+* 6. Results, List & Preview
+* --------------------------------
+*/
+
+.total-stats-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    padding: 15px;
+    background-color: var(--color-bg-primary);
+    border-radius: 8px;
+    border: 1px solid var(--color-border);
+    margin-bottom: 30px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+    font-size: 1.05rem;
+}
+
+.total-stats-bar p {
+    margin: 5px 0;
+}
+
+.reduction-rate {
+    font-weight: bold; 
+    color: var(--color-success);
+    margin-left: 5px;
+}
+
+.file-list-grid {
+    display: grid;
+    /* 최소 너비 450px을 기준으로 가로로 최대한 채우는 반응형 그리드 */
+    grid-template-columns: repeat(auto-fit, minmax(450px, 1fr)); 
+    gap: 25px;
+    margin-top: 20px;
+}
+
+.file-card {
+    padding: 20px;
+    border: 1px solid var(--color-border);
+    border-radius: 12px;
+    background-color: var(--color-bg-secondary);
+    box-shadow: var(--color-shadow);
+    transition: border-color 0.3s, box-shadow 0.3s;
+}
+
+.file-card h3 {
+    text-align: center;
+    font-size: 1.2rem;
+    margin-top: 0;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--color-border);
+}
+
+/* 상태별 스타일 */
+.file-card.optimized {
+    border-color: var(--color-success);
+    box-shadow: 0 0 15px rgba(40, 167, 69, 0.2); 
+}
+
+.file-card.error {
+    border-color: var(--color-error);
+    box-shadow: 0 0 15px rgba(220, 53, 69, 0.2); 
+}
+
+.preview-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 15px;
+}
+
+.preview-box {
+    position: relative; /* 로딩 오버레이를 위한 기준점 */
+    padding: 10px;
+    border: 1px dashed var(--color-border);
+    border-radius: 8px;
+    min-height: 280px; /* 적당한 최소 높이 */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.preview-box h4 {
+    margin-top: 0;
+    font-size: 0.9rem;
+    font-weight: 500;
+}
+
+.gif-image {
+    max-width: 100%;
+    max-height: 180px;
+    object-fit: contain;
+    border-radius: 4px;
+    border: 1px solid var(--color-border);
+    flex-grow: 1; /* 이미지가 차지할 수 있는 공간 최대화 */
+    margin: 5px 0;
+}
+
+.result-stats {
+    font-size: 0.95rem;
+    margin: 10px 0;
+}
+
+.placeholder-text {
+    font-style: italic;
+    color: #6c757d;
+    text-align: center;
+    margin-top: 50px;
+}
+
+/* 로딩 오버레이 (개별 파일 처리 중 표시) */
+.loading-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: var(--color-bg-secondary);
+    opacity: 0.95; 
+    z-index: 10;
+    border-radius: 8px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    pointer-events: none;
+    transition: opacity 0.3s;
+}
+
+.spinner {
+    border: 5px solid var(--color-border);
+    border-top: 5px solid var(--color-accent);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin-bottom: 15px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.loading-overlay p {
+    color: var(--color-text); 
+    font-weight: 600;
+}
+
+
+/*
+* --------------------------------
+* 7. Mobile Responsiveness (Small Screens)
+* --------------------------------
+*/
+
+@media (max-width: 768px) {
+    h1 {
+        font-size: 1.8rem;
+    }
+
+    .file-list-grid {
+        /* 좁은 화면에서 파일 카드를 세로로 정렬 */
+        grid-template-columns: 1fr; 
+    }
+    
+    .preview-comparison {
+        /* 파일 카드 내부의 원본/최적화 미리보기 세로 정렬 */
+        grid-template-columns: 1fr;
+    }
+    
+    .total-stats-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .download-all-button {
+        width: 100%;
+    }
+}
+
+@media (max-width: 500px) {
+    .file-list-grid {
+        /* 아주 좁은 화면에서도 1열 유지 */
+        grid-template-columns: 1fr;
+    }
+}
