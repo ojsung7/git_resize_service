@@ -78,6 +78,16 @@ const GifOptimizer: React.FC = () => {
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
     const [isDragActive, setIsDragActive] = useState<boolean>(false);
     const [toastMessage, setToastMessage] = useState<string>('');
+    // globalError를 토스트로 변환하여 표시하고 자동으로 사라지게 함
+    useEffect(() => {
+        if (!globalError) return;
+        setToastMessage(globalError);
+        const t = setTimeout(() => {
+            setToastMessage('');
+            setGlobalError('');
+        }, 3500);
+        return () => clearTimeout(t);
+    }, [globalError]);
 
     // 테마 및 클린업
     useEffect(() => {
@@ -480,6 +490,7 @@ const GifOptimizer: React.FC = () => {
                     </div>
 
                     {/* {globalError && <p className="error-text">🚨 {globalError}</p>} */}
+                    {/* globalError는 토스트로 통합되어 있으므로 인라인 에러는 제거했습니다. */}
                 </div>
             )}
 
