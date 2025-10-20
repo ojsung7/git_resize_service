@@ -6,7 +6,8 @@ import React, {
 } from 'react';
 import type { 
     ChangeEvent, 
-    MouseEvent 
+    MouseEvent,
+    DragEvent,
 } from 'react';
 import './GifOptimizer.css';
 
@@ -72,6 +73,8 @@ const GifOptimizer: React.FC = () => {
     const [isOptimizing, setIsOptimizing] = useState<boolean>(false);
     const [globalError, setGlobalError] = useState<string>('');
     const [isDarkMode, setIsDarkMode] = useState<boolean>(false);
+    const [isDragActive, setIsDragActive] = useState<boolean>(false);
+    const [toastMessage, setToastMessage] = useState<string>('');
 
     // 테마 및 클린업
     useEffect(() => {
@@ -107,48 +110,87 @@ const GifOptimizer: React.FC = () => {
         });
     }, []);
 
-    const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
-        const selectedFiles = Array.from(event.target.files || []);
-        // 이전 URL 해제
-        setFiles(prevFiles => {
-            prevFiles.forEach(item => {
-                URL.revokeObjectURL(item.originalUrl);
-                if (item.optimizedUrl) URL.revokeObjectURL(item.optimizedUrl);
+    const processFiles = useCallback((fileList: FileList | File[]) => {
+        const selectedFiles = Array.from(fileList || []);
+
+        setFiles(prev => {
+            const existingKeys = new Set(prev.map(p => `${p.file.name}_${p.file.size}`));
+            const batchKeys = new Set<string>();
+            const newFileStates: GifFileState[] = [];
+            let errorCount = 0;
+
+            const duplicateNames: string[] = [];
+            selectedFiles.forEach((file, index) => {
+                const key = `${file.name}_${file.size}`;
+                if (file.type === 'image/gif' && !existingKeys.has(key) && !batchKeys.has(key)) {
+                    batchKeys.add(key);
+                    const url = URL.createObjectURL(file);
+                    newFileStates.push({
+                        id: Date.now() + Math.floor(Math.random() * 100000) + index,
+                        file,
+                        originalUrl: url,
+                        originalSize: file.size,
+                        optimizedUrl: '',
+                        optimizedSize: 0,
+                        reductionRate: 0,
+                        isProcessing: false,
+                        error: '',
+                    });
+                } else {
+                    // either not a GIF or duplicate
+                    if (file.type === 'image/gif') duplicateNames.push(file.name);
+                    errorCount++;
+                }
             });
-            return [];
-        });
-        setGlobalError('');
 
-        const newFileStates: GifFileState[] = [];
-        let errorCount = 0;
-
-        selectedFiles.forEach((file, index) => {
-            if (file.type === 'image/gif') {
-                const url = URL.createObjectURL(file);
-                newFileStates.push({
-                    id: Date.now() + index,
-                    file,
-                    originalUrl: url,
-                    originalSize: file.size,
-                    optimizedUrl: '',
-                    optimizedSize: 0,
-                    reductionRate: 0,
-                    isProcessing: false,
-                    error: '',
-                });
+            if (errorCount > 0) {
+                setGlobalError(`🚨 ${errorCount}개의 파일이 제외되었습니다. (GIF 형식이 아니거나 중복 파일)`);
+                if (duplicateNames.length > 0) {
+                    setToastMessage(`이미 등록된 파일: ${duplicateNames.slice(0,3).join(', ')}${duplicateNames.length>3?` 외 ${duplicateNames.length-3}개` : ''}`);
+                    setTimeout(() => setToastMessage(''), 3500);
+                }
             } else {
-                errorCount++;
+                setGlobalError('');
             }
+
+            return [...prev, ...newFileStates];
         });
-
-        setFiles(newFileStates);
-
-        if (errorCount > 0) {
-            setGlobalError(`🚨 ${errorCount}개의 파일은 GIF 형식이 아니어서 제외되었습니다.`);
-        }
-
-        event.target.value = '';
     }, []);
+
+    const handleFileChange = useCallback((event: ChangeEvent<HTMLInputElement>) => {
+        processFiles(event.target.files || []);
+        event.target.value = '';
+    }, [processFiles]);
+
+    const handleDragEnter = useCallback((e: DragEvent<HTMLElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragActive(true);
+    }, []);
+
+    const handleDragOver = useCallback((e: DragEvent<HTMLElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        // 필요 시 drop을 허용
+        e.dataTransfer.dropEffect = 'copy';
+        setIsDragActive(true);
+    }, []);
+
+    const handleDragLeave = useCallback((e: DragEvent<HTMLElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragActive(false);
+    }, []);
+
+    const handleDrop = useCallback((e: DragEvent<HTMLElement>) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setIsDragActive(false);
+        if (e.dataTransfer && e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+            processFiles(e.dataTransfer.files);
+            e.dataTransfer.clearData();
+        }
+    }, [processFiles]);
 
     const handleSettingChange = useCallback((name: keyof OptimizationSettings, min: number, max: number) => (
         (event: ChangeEvent<HTMLInputElement>) => {
@@ -269,7 +311,7 @@ const GifOptimizer: React.FC = () => {
         }
     }, [files, settings]);
 
-    const handleDownload = useCallback((url: string, fileName: string) => (event: MouseEvent<HTMLButtonElement>) => {
+    const handleDownload = useCallback((url: string, fileName: string) => (_event: MouseEvent<HTMLButtonElement>) => {
         if (url && fileName) {
             const link = document.createElement('a');
             link.href = url;
@@ -293,6 +335,27 @@ const GifOptimizer: React.FC = () => {
         });
     }, [files]);
 
+    const handleRemoveFile = useCallback((id: number) => {
+        setFiles(prev => {
+            const toRemove = prev.find(p => p.id === id);
+            if (toRemove) {
+                URL.revokeObjectURL(toRemove.originalUrl);
+                if (toRemove.optimizedUrl) URL.revokeObjectURL(toRemove.optimizedUrl);
+            }
+            return prev.filter(p => p.id !== id);
+        });
+    }, []);
+
+    const handleClearAll = useCallback(() => {
+        setFiles(prev => {
+            prev.forEach(p => {
+                URL.revokeObjectURL(p.originalUrl);
+                if (p.optimizedUrl) URL.revokeObjectURL(p.optimizedUrl);
+            });
+            return [];
+        });
+    }, []);
+
     const totalOriginalSize = useMemo(() => files.reduce((acc, f) => acc + f.originalSize, 0), [files]);
     const totalOptimizedSize = useMemo(() => files.reduce((acc, f) => acc + f.optimizedSize, 0), [files]);
     const totalReductionRate = useMemo(() => {
@@ -304,6 +367,11 @@ const GifOptimizer: React.FC = () => {
 
     return (
         <div className="container">
+            {toastMessage && (
+                <div className="toast" role="status">
+                    {toastMessage}
+                </div>
+            )}
             <button className="theme-toggle-button" onClick={handleThemeToggle}>
                 {isDarkMode ? '☀️' : '🌙'}
             </button>
@@ -312,7 +380,14 @@ const GifOptimizer: React.FC = () => {
 
             <div className="section">
                 <h2>1. GIF 파일 업로드</h2>
-                <label htmlFor="hidden-file-input" className="custom-file-input-label">
+                <label
+                    htmlFor="hidden-file-input"
+                    className={`custom-file-input-label ${isDragActive ? 'drag-active' : ''}`}
+                    onDragEnter={handleDragEnter}
+                    onDragOver={handleDragOver}
+                    onDragLeave={handleDragLeave}
+                    onDrop={handleDrop}
+                >
                     <div className="upload-content">
                         <p>
                             <strong>
@@ -338,7 +413,7 @@ const GifOptimizer: React.FC = () => {
                     <h2>2. 최적화 설정 및 실행</h2>
                     <div className="controls-grid">
                         <div className="control-group">
-                            <label htmlFor="lossy">Lossy 값 (0-300): **{settings.lossy}**</label>
+                            <label htmlFor="lossy">손실압축 값 (0-300): **{settings.lossy}**</label>
                             <input
                                 id="lossy"
                                 type="range"
@@ -360,7 +435,7 @@ const GifOptimizer: React.FC = () => {
                         </div>
 
                         <div className="control-group">
-                            <label htmlFor="colors">Colors 수 (2-256): **{settings.colors}**</label>
+                            <label htmlFor="colors">색상수 (2-256): **{settings.colors}**</label>
                             <input
                                 id="colors"
                                 type="range"
@@ -392,11 +467,16 @@ const GifOptimizer: React.FC = () => {
                             : `🔥 ${files.length}개 파일 최적화 시작`}
                     </button>
 
-                    <p className="guidance-text">
-                        **중요:** `Lossy` 값과 `Colors` 값이 **클수록** GIF의 파일 용량은 크게 줄어들지만, **화질 저하**와 **색상 손실**이 발생할 수 있습니다. 최적의 결과를 얻으려면 여러 값을 시험해 보세요.
-                    </p>
+                    <div className="guidance-text">
+                        <div className="guidance-title">★ 중요 ★</div>
+                        <div className="guidance-body">
+                            <p><code>손실압축 값</code>이 클수록 압축이 강해져 파일 크기는 더 작아지지만 화질 저하가 발생합니다.</p>
+                            <p><code>색상수</code>가 줄어들수록 파일 크기가 작아지지만 색상 계조나 표현이 손실될 수 있습니다.</p>
+                            <p>최적의 결과를 얻으려면 다양한 <code>손실압축 값</code>과 <code>색상수</code> 조합을 시험해 보세요.</p>
+                        </div>
+                    </div>
 
-                    {globalError && <p className="error-text">🚨 {globalError}</p>}
+                    {/* {globalError && <p className="error-text">🚨 {globalError}</p>} */}
                 </div>
             )}
 
@@ -412,13 +492,22 @@ const GifOptimizer: React.FC = () => {
                             </strong>{' '}
                             ({formatBytes(totalOriginalSize)} → {formatBytes(totalOptimizedSize)})
                         </p>
-                        <button
-                            onClick={handleDownloadAll}
-                            disabled={isOptimizing || files.every(f => !f.optimizedUrl)}
-                            className="download-all-button"
-                        >
-                            ⬇️ 전체 다운로드 ({files.filter(f => f.optimizedUrl).length}개)
-                        </button>
+                        <div className="total-actions">
+                            <button
+                                onClick={handleDownloadAll}
+                                disabled={isOptimizing || files.every(f => !f.optimizedUrl)}
+                                className="download-all-button"
+                            >
+                                ⬇️ 전체 다운로드 ({files.filter(f => f.optimizedUrl).length}개)
+                            </button>
+                            <button
+                                onClick={handleClearAll}
+                                disabled={files.length === 0}
+                                className="clear-all-button"
+                            >
+                                🗑️ 모두 삭제
+                            </button>
+                        </div>
                     </div>
 
                     <div className="file-list-grid">
@@ -462,6 +551,14 @@ const GifOptimizer: React.FC = () => {
                                             <p className="placeholder-text">최적화 대기 중</p>
                                         )}
                                     </div>
+                                <div className="file-actions">
+                                    <button
+                                        onClick={() => handleRemoveFile(fileState.id)}
+                                        className="remove-file-button"
+                                    >
+                                        🗑️ 삭제
+                                    </button>
+                                </div>
                                 </div>
                             </div>
                         ))}

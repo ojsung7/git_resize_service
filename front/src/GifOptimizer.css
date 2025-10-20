@@ -139,6 +139,13 @@ h1, h2, h3, h4 {
     border-color: var(--color-accent);
 }
 
+/* Drag active visual */
+.custom-file-input-label.drag-active {
+    background-color: rgba(77, 166, 255, 0.06);
+    border-color: var(--color-accent);
+    box-shadow: 0 6px 18px rgba(77, 166, 255, 0.12);
+}
+
 .upload-content p {
     margin-bottom: 15px;
     font-size: 1.1rem;
@@ -211,6 +218,48 @@ h1, h2, h3, h4 {
     border: 1px solid var(--color-error);
 }
 
+/* 안내 문구 내부 제목(중요)를 중앙 정렬 */
+.guidance-title {
+    text-align: center;
+    font-weight: 800;
+    font-size: 1.05rem;
+    margin-bottom: 8px;
+}
+
+.guidance-body p {
+    margin: 6px 0;
+    line-height: 1.4;
+    /* color: var(--color-text); */
+}
+
+.guidance-text code {
+    background: rgba(0,0,0,0.04);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-size: 0.95em;
+}
+
+/* Toast notification */
+.toast {
+    position: fixed;
+    top: 24px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 10px 16px;
+    border-radius: 8px;
+    z-index: 1100;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+    font-weight: 600;
+    animation: toast-in 0.25s ease-out;
+}
+
+@keyframes toast-in {
+    from { transform: translateX(-50%) translateY(-8px); opacity: 0; }
+    to { transform: translateX(-50%) translateY(0); opacity: 1; }
+}
+
 /*
 * --------------------------------
 * 5. Buttons & Feedback
@@ -278,6 +327,41 @@ h1, h2, h3, h4 {
 .download-single-button {
     width: 100%;
     margin-top: 10px;
+}
+
+.clear-all-button {
+    margin-left: 12px;
+    padding: 10px 16px;
+    background-color: transparent;
+    color: var(--color-error);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.clear-all-button:hover:not(:disabled) {
+    background-color: rgba(220,53,69,0.06);
+    border-color: var(--color-error);
+}
+
+.file-actions {
+    display: flex;
+    justify-content: center;
+    margin-top: 12px;
+}
+
+.remove-file-button {
+    padding: 8px 12px;
+    background-color: transparent;
+    color: var(--color-error);
+    border: 1px solid var(--color-border);
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+}
+.remove-file-button:hover {
+    background-color: rgba(220,53,69,0.06);
+    border-color: var(--color-error);
 }
 
 .error-text {
@@ -483,6 +567,11 @@ h1, h2, h3, h4 {
 
     .download-all-button {
         width: 100%;
+    }
+
+    .clear-all-button{
+        margin: 0;
+        margin-top: 20px;
     }
 }
 
