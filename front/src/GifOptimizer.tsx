@@ -63,6 +63,9 @@ const b64toBlob = (b64Data: string, contentType: string = 'image/gif'): Blob => 
     return new Blob([byteArray], { type: contentType });
 };
 
+// 환경변수로 백엔드 URL 관리 (Vite: VITE_API_URL)
+const API_BASE = (import.meta as any).env?.VITE_API_URL || 'http://127.0.0.1:5000';
+
 // ------------------- 메인 컴포넌트 -------------------
 const GifOptimizer: React.FC = () => {
     const [files, setFiles] = useState<GifFileState[]>([]);
@@ -226,7 +229,7 @@ const GifOptimizer: React.FC = () => {
         formData.append('colors', settings.colors.toString());
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/optimize-gif', {
+            const response = await fetch(`${API_BASE}/api/optimize-gif`, {
                 method: 'POST',
                 body: formData,
             });
